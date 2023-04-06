@@ -7,8 +7,8 @@ const Location = require("../models/Location");
 router.post(
   "/addLocation",
   [
-    body("locationName", "Enter Valid Value").isLength({ min: 1 }),
-    body("address", "Enter Valid Data").isLength({ min: 1 }),
+    body("locationName", "Enter Location Name").isLength({ min: 1 }),
+    body("address", "Enter Address").isLength({ min: 1 }),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -18,15 +18,17 @@ router.post(
 
     try {
       const { locationName, address } = req.body;
-      await Location.create({
+      const location = await Location.create({
         locationName,
         address,
       });
 
-      return res.send({ success: true });
+      return res.send({ _id: location._id, success: true });
     } catch (err) {
       console.log(err);
-      return res.status(500).send({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .send({ errors: [{ msg: "Internal Server Error" }] });
     }
   }
 );
@@ -35,8 +37,8 @@ router.post(
 router.put(
   "/updateLocation",
   [
-    body("locationName", "Enter Valid Value").isLength({ min: 1 }),
-    body("address", "Enter Valid Data").isLength({ min: 1 }),
+    body("locationName", "Enter Location Name").isLength({ min: 1 }),
+    body("address", "Enter Address").isLength({ min: 1 }),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -46,7 +48,7 @@ router.put(
 
     try {
       if (req.body._id.length !== 24) {
-        return res.status(404).send({ error: "Not Found!" });
+        return res.status(404).send({ errors: [{ msg: "Not Found" }] });
       }
 
       const { locationName, address } = req.body;
@@ -62,13 +64,13 @@ router.put(
         { new: true }
       );
       if (!location) {
-        return res.status(404).send({ error: "Not Found!" });
+        return res.status(404).send({ errors: [{ msg: "Not Found" }] });
       } else {
         return res.status(200).send({ success: true });
       }
     } catch (err) {
       console.log(err);
-      return res.status(500).send({ error: "Internal Server Error" });
+      return res.status(500).send({ errors: [{ msg: "Internal Server Error" }] });
     }
   }
 );
@@ -77,18 +79,18 @@ router.put(
 router.delete("/deleteLocation", async (req, res) => {
   try {
     if (req.body._id.length !== 24) {
-      return res.status(404).send({ error: "Not Found!" });
+      return res.status(404).send({ errors: [{ msg: "Not Found" }] });
     }
 
     const tempLocation = await Location.findByIdAndDelete(req.body._id);
     if (!tempLocation) {
-      return res.status(404).send({ error: "File not Found!" });
+      return res.status(404).send({ errors: [{ msg: "Not Found" }] });
     } else {
       return res.status(200).send({ success: true });
     }
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ errors: "Internal Server Error" });
+    return res.status(500).send({ errors: [{ msg: "Internal Server Error" }] });
   }
 });
 
@@ -99,7 +101,7 @@ router.get("/fetchAllLocations", async (req, res) => {
     return res.status(200).send({ locationsArray: data });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ errors: "Internal Server Error" });
+    return res.status(500).send({ errors: [{ msg: "Internal Server Error" }] });
   }
 });
 

@@ -8,7 +8,7 @@ const path = require("path");
 const fs = require("fs");
 
 let currImgName;
-const allowedFiles = ["image/png", "image/jpeg", "image/jpg"];
+const allowedFiles = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -37,14 +37,14 @@ router.post(
   [
     check("photo")
       .custom((value, { req }) => {
-        console.log(req.file)
+        console.log(req.file);
         if (allowedFiles.includes(req.file.mimetype)) return true;
         else return false;
       })
       .withMessage("JPEG, JPG, PNG File are Allowed"),
     body("make", "Write appropriate manufacture").isLength({ min: 1 }),
     body("model", "Write appropriate model").isLength({ min: 1 }),
-    body("year", "Should be Number").isDecimal(),
+    body("year", "Year Should be Number").isDecimal(),
     body("color", "Write a appropriate Color").isLength({ min: 1 }),
     body("mileage", "Should be Number").isDecimal(),
     body("price_per_day", "Should be a number").isDecimal(),
@@ -70,7 +70,7 @@ router.post(
       } = req.body;
 
       const car = await Car.create({
-        make,
+        make: make.toUpperCase,
         model,
         year,
         color,
@@ -85,16 +85,7 @@ router.post(
       return res.status(200).send({ _id: car._id, img: currImgName, success });
     } catch (err) {
       console.log(err);
-      if (car.img !== undefined) {
-        try {
-          fs.unlink(".\\public\\" + car.img, (err) => {
-            console.log(err);
-            console.log("File Deleted!");
-          });
-        } catch (err) {
-          console.log(err);
-        }
-      }
+
       res
         .status(500)
         .send({ errors: [{ errors: "Internal Server Error" }], success });
@@ -137,58 +128,78 @@ router.delete("/deleteCar", async (req, res) => {
 });
 
 // Route 2: Update the data of the Car using Put method
-router.put("/updateCar", async (req, res) => {
-  let success = false;
-  try {
-    if (req.body._id.length !== 24) {
-      return res.status(404).send({ errors: [{ msg: "Not Found" }], success });
+router.put(
+  "/updateCar",
+  body("make", "Write appropriate manufacture").isLength({ min: 1 }),
+  body("model", "Write appropriate model").isLength({ min: 1 }),
+  body("year", "Year Should be Number").isDecimal(),
+  body("color", "Write a appropriate Color").isLength({ min: 1 }),
+  body("mileage", "Should be Number").isDecimal(),
+  body("price_per_day", "Should be a number").isDecimal(),
+  body("carType", "Cartype cant be Empty").isLength({ min: 1 }),
+  body("status", "Select Status").isLength({ min: 1 }),
+  async (req, res) => {
+    let success = false;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).send({ errors: errors.errors, success });
     }
-    const {
-      make,
-      model,
-      year,
-      color,
-      mileage,
-      price_per_day,
-      carType,
-      status,
-    } = req.body;
 
-    const tempCar = {
-      make,
-      model,
-      year,
-      color,
-      mileage,
-      price_per_day,
-      carType: carType.toUpperCase(),
-      status,
-    };
+    try {
+      if (req.body._id.length !== 24) {
+        return res
+          .status(404)
+          .send({ errors: [{ msg: "Not Found" }], success });
+      }
+      const {
+        make,
+        model,
+        year,
+        color,
+        mileage,
+        price_per_day,
+        carType,
+        status,
+      } = req.body;
 
-    const car = await Car.findByIdAndUpdate(
-      req.body._id,
-      { $set: tempCar },
-      { new: true }
-    );
+      const tempCar = {
+        make: make.toUpperCase(),
+        model,
+        year,
+        color,
+        mileage,
+        price_per_day,
+        carType: carType.toUpperCase(),
+        status,
+      };
 
-    if (!car) {
-      return res.status(404).send({ errors: [{ msg: "Not Found" }], success });
-    } else {
-      success = true;
-      return res.status(200).send({ success });
+      const car = await Car.findByIdAndUpdate(
+        req.body._id,
+        { $set: tempCar },
+        { new: true }
+      );
+
+      if (!car) {
+        return res
+          .status(404)
+          .send({ errors: [{ msg: "Not Found" }], success });
+      } else {
+        success = true;
+        return res.status(200).send({ success });
+      }
+    } catch (err) {
+      console.log(err);
+      res
+        .status(500)
+        .send({ errors: [{ msg: "Internal Server Error" }], success });
     }
-  } catch (err) {
-    console.log(err);
-    res
-      .status(500)
-      .send({ errors: [{ msg: "Internal Server Error" }], success });
   }
-});
+);
 
 // Route 3: Fetch All Car using the GET Method
 router.get("/fetchAllCars", async (req, res) => {
+  let success = false;
   try {
-    let success = false;
     const carList = await Car.find({});
 
     success = true;
@@ -211,6 +222,39 @@ router.get("/groupbyCarType", async (req, res) => {
       },
     ]);
     res.send({ data: response, success });
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .send({ errors: [{ msg: "Internal Server Error" }], success });
+  }
+});
+
+//Route 5: Group by the car Maker
+router.get("/groupbyCarMake", async (req, res) => {
+  let success = false;
+  try {
+    const response = await Car.aggregate([
+      { $group: { _id: "$make", count: { $count: {} } } },
+    ]);
+
+    success = true;
+    res.send({ data: response, success });
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .send({ errors: [{ msg: "Internal Server Error" }], success });
+  }
+});
+
+// Route 6: Fetch a Car Image
+router.get("/fetchImage/:imgName", async (req, res) => {
+  let success = false;
+  try {
+    const { imgName } = req.params;
+    success = true;
+    res.sendFile(path.resolve("./public") + "/" + imgName);
   } catch (err) {
     console.log(err);
     res
