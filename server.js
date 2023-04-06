@@ -6,6 +6,7 @@ const car = require("./routes/car");
 const location = require("./routes/location");
 const rental = require("./routes/rental");
 const app = express();
+const bodyParser = require('body-parser');
 const port = 5000;
 
 connectToMongoose();
@@ -14,7 +15,7 @@ connectToMongoose();
 app.use(cors());
 
 // Routes
-app.use(express.json());
+app.use(bodyParser.json());
 app.use("/api/auth", auth);
 app.use("/api/car", car);
 app.use("/api/location", location);
