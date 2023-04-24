@@ -30,6 +30,8 @@ router.post(
         rentalEndDate,
         rentalPrice,
         paymentStatus,
+        rentalStartTime,
+        rentalEndTime,
       } = req.body;
 
       if (
@@ -40,7 +42,7 @@ router.post(
         return res.status(400).send({ error: "Invalid Data" });
       }
 
-      await Rental.create({
+      const tempRental = await Rental.create({
         carID,
         locationID,
         userID,
@@ -48,8 +50,10 @@ router.post(
         rentalEndDate,
         rentalPrice,
         paymentStatus,
+        rentalStartTime,
+        rentalEndTime,
       });
-      return res.status(200).send({ success: true });
+      return res.status(200).send({ success: true, _id:tempRental._id });
     } catch (err) {
       console.log(err);
       return res.status(500).send({ error: "Internal Server Error" });
@@ -82,6 +86,8 @@ router.put(
         rentalEndDate,
         rentalPrice,
         paymentStatus,
+        rentalStartTime,
+        rentalEndTime,
       } = req.body;
 
       if (
@@ -101,6 +107,8 @@ router.put(
         rentalEndDate,
         rentalPrice,
         paymentStatus,
+        rentalStartTime,
+        rentalEndTime,
       };
 
       const tempRental = await Rental.findByIdAndUpdate(

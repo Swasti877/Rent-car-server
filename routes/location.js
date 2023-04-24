@@ -105,4 +105,24 @@ router.get("/fetchAllLocations", async (req, res) => {
   }
 });
 
+// Route 4: Get Location name using Location ID
+router.get("/fetchName/:_id", async(req, res)=> {
+
+  try{
+    const {_id} = req.params;
+    if (_id.length !== 24) {
+      return res.status(404).send({ errors: [{ msg: "Not Found" }] });
+    }
+    const tempLoc = await Location.findOne({_id});
+    if(!tempLoc) {
+      return res.status(404).send({ errors: [{ msg: "Not Found" }] });
+    }
+
+    return res.status(200).send({locationName: tempLoc.locationName});
+  }catch (err) {
+    console.log(err);
+    return res.status(500).send({ errors: [{ msg: "Internal Server Error" }] });
+  }
+})
+
 module.exports = router;

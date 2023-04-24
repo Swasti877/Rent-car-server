@@ -119,7 +119,10 @@ router.post(
           };
           const token = jwt.sign(data, JWTSECRET);
           success = true;
-          return res.send({ success, token });
+          if (user.isAdmin) {
+            return res.send({ success, token, isAdmin: user.isAdmin });
+          }
+          return res.send({ success, token, isAdmin: false });
         }
       }
     } catch (err) {
@@ -130,5 +133,21 @@ router.post(
     }
   }
 );
+
+// Route 3: For Getting a _id from the a Token;
+router.post("/getID", async (req, res) => {
+  let success = false;
+  try {
+    const { token } = req.body;
+    const decodedToken = jwt.verify(token, JWTSECRET);
+    const { id } = decodedToken.user;
+    res.send({ _id: id });
+  } catch (err) {
+    console.log(err);
+    return res
+      .status(500)
+      .send({ errors: [{ msg: "Internal Server Error" }], success });
+  }
+});
 
 module.exports = router;

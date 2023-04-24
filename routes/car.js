@@ -212,11 +212,28 @@ router.get("/fetchAllCars", async (req, res) => {
   }
 });
 
-// Route 4: Group by function for Car
+// Route 6: fetching only Avialiable Car
+router.get("/fetchAvialiableCars", async (req, res) => {
+  let success = false;
+  try {
+    const carList = await Car.find({ status: true });
+
+    success = true;
+    res.send({ carList, success });
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .send({ errors: [{ msg: "Internal Server Error" }], success });
+  }
+});
+
+// Route 5: Group by function for Car
 router.get("/groupbyCarType", async (req, res) => {
   let success = false;
   try {
     const response = await Car.aggregate([
+      { $match: { status: { $eq: true } } },
       {
         $group: { _id: "$carType", count: { $count: {} } },
       },
@@ -230,11 +247,12 @@ router.get("/groupbyCarType", async (req, res) => {
   }
 });
 
-//Route 5: Group by the car Maker
+//Route 6: Group by the car Maker
 router.get("/groupbyCarMake", async (req, res) => {
   let success = false;
   try {
     const response = await Car.aggregate([
+      { $match: { status: { $eq: true } } },
       { $group: { _id: "$make", count: { $count: {} } } },
     ]);
 
@@ -248,13 +266,28 @@ router.get("/groupbyCarMake", async (req, res) => {
   }
 });
 
-// Route 6: Fetch a Car Image
+// Route 7: Fetch a Car Image
 router.get("/fetchImage/:imgName", async (req, res) => {
   let success = false;
   try {
     const { imgName } = req.params;
     success = true;
     res.sendFile(path.resolve("./public") + "/" + imgName);
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .send({ errors: [{ msg: "Internal Server Error" }], success });
+  }
+});
+
+// Route For testing purpose
+router.get("/test", async (req, res) => {
+  let success = false;
+  try {
+    const carTypeArray = [];
+    const data = await Car.find({ carType: { $in: carTypeArray } });
+    res.send(data);
   } catch (err) {
     console.log(err);
     res
