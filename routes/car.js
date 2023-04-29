@@ -130,14 +130,16 @@ router.delete("/deleteCar", async (req, res) => {
 // Route 2: Update the data of the Car using Put method
 router.put(
   "/updateCar",
-  body("make", "Write appropriate manufacture").isLength({ min: 1 }),
-  body("model", "Write appropriate model").isLength({ min: 1 }),
-  body("year", "Year Should be Number").isDecimal(),
-  body("color", "Write a appropriate Color").isLength({ min: 1 }),
-  body("mileage", "Should be Number").isDecimal(),
-  body("price_per_day", "Should be a number").isDecimal(),
-  body("carType", "Cartype cant be Empty").isLength({ min: 1 }),
-  body("status", "Select Status").isLength({ min: 1 }),
+  [
+    body("make", "Write appropriate manufacture").isLength({ min: 1 }),
+    body("model", "Write appropriate model").isLength({ min: 1 }),
+    body("year", "Year Should be Number").isDecimal(),
+    body("color", "Write a appropriate Color").isLength({ min: 1 }),
+    body("mileage", "Should be Number").isDecimal(),
+    body("price_per_day", "Should be a number").isDecimal(),
+    body("carType", "Cartype cant be Empty").isLength({ min: 1 }),
+    body("status", "Select Status").isLength({ min: 1 }),
+  ],
   async (req, res) => {
     let success = false;
     const errors = validationResult(req);
@@ -281,13 +283,38 @@ router.get("/fetchImage/:imgName", async (req, res) => {
   }
 });
 
+// Route 8: Fetch Only Particular car using ID;
+router.post("/fetchACar", async (req, res) => {
+  let success = false;
+  try {
+    const { _id } = req.body;
+    const car = await Car.find({ _id });
+    if (car) {
+      success = true;
+      res.send({ car, success });
+    } else {
+      res.status(404).send({ errors: [{ msg: "Not Found" }], success });
+    }
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .send({ errors: [{ msg: "Internal Server Error" }], success });
+  }
+});
+
 // Route For testing purpose
 router.get("/test", async (req, res) => {
   let success = false;
   try {
-    const carTypeArray = [];
-    const data = await Car.find({ carType: { $in: carTypeArray } });
-    res.send(data);
+    const { _id } = req.body;
+    const car = await Car.find({ _id });
+    if (car) {
+      success = true;
+      res.send({ car, success });
+    } else {
+      res.status(404).send({ errors: [{ msg: "Not Found" }], success });
+    }
   } catch (err) {
     console.log(err);
     res

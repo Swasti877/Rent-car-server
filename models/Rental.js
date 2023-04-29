@@ -5,14 +5,22 @@ const RetalSchema = new Schema({
   carID: {
     type: Schema.Types.ObjectId,
     ref: "Car",
+    required: true,
   },
-  locationID: {
-    type: Array,
+  locationIDPickUp: {
+    type: Schema.Types.ObjectId,
     ref: "Location",
+    required: true,
+  },
+  locationIDDropOff: {
+    type: Schema.Types.ObjectId,
+    ref: "Location",
+    required: true,
   },
   userID: {
     type: Schema.Types.ObjectId,
     ref: "User",
+    required: true,
   },
   rentalStartDate: {
     type: Date,
@@ -24,9 +32,11 @@ const RetalSchema = new Schema({
   },
   rentalStartTime: {
     type: String,
+    required: true,
   },
   rentalEndTime: {
     type: String,
+    required: true,
   },
   rentalPrice: {
     type: Number,

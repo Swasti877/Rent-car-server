@@ -2,13 +2,20 @@ const express = require("express");
 const router = express.Router();
 const { body, validationResult } = require("express-validator");
 const Rental = require("../models/Rental");
+const Car = require("../models/Car");
+const jwt = require("jsonwebtoken");
+const JWTSECRET = "uMeG94CzHg";
 
 // Route 1: Add rental Detail using POST Method
 router.post(
   "/addRental",
   [
-    body("carID", "Enter valid data").isLength({ min: 1 }),
-    body("locationID", "Enter valid data").isLength({ min: 1 }),
+    body("carID", "Enter valid data").isLength({ min: 24, max: 24 }),
+    body("locationIDPickUp", "Enter valid data").isLength({ min: 24, max: 24 }),
+    body("locationIDDropOff", "Enter valid data").isLength({
+      min: 24,
+      max: 24,
+    }),
     body("userID", "Enter valid data").isLength({ min: 1 }),
     body("rentalStartDate", "Enter valid data").isDate(),
     body("rentalEndDate", "Enter valid data").isDate(),
@@ -24,7 +31,8 @@ router.post(
     try {
       const {
         carID,
-        locationID,
+        locationIDPickUp,
+        locationIDDropOff,
         userID,
         rentalStartDate,
         rentalEndDate,
@@ -36,7 +44,8 @@ router.post(
 
       if (
         carID.length != 24 ||
-        locationID.length != 24 ||
+        locationIDPickUp.length != 24 ||
+        locationIDDropOff.length != 24 ||
         userID.length != 24
       ) {
         return res.status(400).send({ error: "Invalid Data" });
@@ -44,7 +53,8 @@ router.post(
 
       const tempRental = await Rental.create({
         carID,
-        locationID,
+        locationIDPickUp,
+        locationIDDropOff,
         userID,
         rentalStartDate,
         rentalEndDate,
@@ -53,7 +63,11 @@ router.post(
         rentalStartTime,
         rentalEndTime,
       });
-      return res.status(200).send({ success: true, _id:tempRental._id });
+      if (tempRental) {
+        await Car.updateOne({ _id: carID }, { $set: { status: false } }); // Changing the Status to false
+        success = true;
+        return res.status(200).send({ success, _id: tempRental._id });
+      }
     } catch (err) {
       console.log(err);
       return res.status(500).send({ error: "Internal Server Error" });
@@ -80,7 +94,8 @@ router.put(
       const {
         _id,
         carID,
-        locationID,
+        locationIDPickUp,
+        locationIDDropOff,
         userID,
         rentalStartDate,
         rentalEndDate,
@@ -93,7 +108,8 @@ router.put(
       if (
         _id.length != 24 ||
         carID.length != 24 ||
-        locationID.length != 24 ||
+        locationIDPickUp.length != 24 ||
+        locationIDDropOff.length != 24 ||
         userID.length != 24
       ) {
         return res.status(400).send({ error: "Invalid Data" });
@@ -101,7 +117,8 @@ router.put(
 
       const temp = {
         carID,
-        locationID,
+        locationIDPickUp,
+        locationIDDropOff,
         userID,
         rentalStartDate,
         rentalEndDate,
@@ -156,6 +173,58 @@ router.get("/fetchAllRentals", async (req, res) => {
   } catch (err) {
     console.log(err);
     return res.status(500).send({ error: "Internal Server Error" });
+  }
+});
+
+// Route 5: To change any particular column value
+router.get(
+  "/changeValue",
+  [body("_id", "Invalid data").isLength({ min: 24, max: 24 })],
+  async (req, res) => {
+    let success = false;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).send({ errors: errors.errors, success });
+    }
+    try {
+      const { _id, colName, colValue } = req.body;
+      await Rental.updateOne({ _id }, { $set: { colName, colValue } });
+      success = true;
+      return res.send({ success });
+    } catch (err) {
+      console.log(err);
+      res
+        .status(500)
+        .send({ errors: [{ msg: "Internal Server Error" }], success });
+    }
+  }
+);
+
+//Route 6: Fetch the OrderHistory According w.r.t User
+router.post("/fetchOrderHistory", async (req, res) => {
+  let success = false;
+  try {
+    const { authToken } = req.body;
+    const decodedToken = jwt.verify(authToken, JWTSECRET);
+    const { id } = decodedToken.user;
+    const orderHistory = await Rental.find({
+      userID: { $eq: id },
+    });
+
+    if (orderHistory) {
+      // when user has order history
+      success = true;
+      res.send({ orderHistory, success });
+    } else {
+      res
+        .status(404)
+        .send({ errors: [{ msg: "Internal Server Error" }], success });
+    }
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .send({ errors: [{ msg: "Internal Server Error" }], success });
   }
 });
 
