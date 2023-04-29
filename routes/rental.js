@@ -187,10 +187,10 @@ router.put(
       return res.status(400).send({ errors: errors.errors, success });
     }
     try {
-      const { _id } = req.body;
+      const { _id, transactionID } = req.body;
       const temp = await Rental.updateOne(
         { _id },
-        { $set: { paymentStatus: true } }
+        { $set: { paymentStatus: true, transactionID } }
       );
       success = true;
       return res.send({ success, temp });

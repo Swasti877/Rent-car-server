@@ -46,6 +46,9 @@ const RetalSchema = new Schema({
     type: Boolean,
     required: true,
   },
+  transactionID: {
+    type: String,
+  },
 });
 
 module.exports = mongoose.model("Rental", RetalSchema);
