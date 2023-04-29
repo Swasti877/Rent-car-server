@@ -188,9 +188,9 @@ router.get(
     }
     try {
       const { _id, colName, colValue } = req.body;
-      await Rental.updateOne({ _id }, { $set: { colName, colValue } });
+      const temp = await Rental.updateOne({ _id }, { $set: { paymentStatus: colValue } });
       success = true;
-      return res.send({ success });
+      return res.send({ success, temp });
     } catch (err) {
       console.log(err);
       res
