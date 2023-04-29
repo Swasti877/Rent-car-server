@@ -177,7 +177,7 @@ router.get("/fetchAllRentals", async (req, res) => {
 });
 
 // Route 5: To change any particular column value
-router.get(
+router.put(
   "/changeValue",
   [body("_id", "Invalid data").isLength({ min: 24, max: 24 })],
   async (req, res) => {
@@ -187,8 +187,11 @@ router.get(
       return res.status(400).send({ errors: errors.errors, success });
     }
     try {
-      const { _id, colName, colValue } = req.body;
-      const temp = await Rental.updateOne({ _id }, { $set: { paymentStatus: colValue } });
+      const { _id } = req.body;
+      const temp = await Rental.updateOne(
+        { _id },
+        { $set: { paymentStatus: true } }
+      );
       success = true;
       return res.send({ success, temp });
     } catch (err) {
